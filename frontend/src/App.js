@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 
 
 
-import Login from "./Login";
-import Lander from "./Lander";
+import Login from "./auth/Login";
+import Lander from "./components/Lander";
 
 function App() {
   return (

@@ -1,4 +1,4 @@
-import "./Lander.css";
+import "../styles/Lander.css";
 
 const creators = [
   { name: "Sajan Rai", cat: "Art", initials: "SR", supporters: 214, price: 100, grad: "linear-gradient(120deg,#FF6B35,#FF9A6B)" },
