@@ -14,7 +14,7 @@ function Navbar() {
         </nav>
         <div className="nav-actions">
           <a href="/login" className="btn btn-ghost">Login</a>
-          <a href="#" className="btn btn-primary">Sign up</a>
+          <a href="/signup" className="btn btn-primary">Sign up</a>
         </div>
         <button className="hamburger" aria-label="Open menu">
           <span></span><span></span><span></span>
