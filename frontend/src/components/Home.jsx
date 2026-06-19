@@ -15,14 +15,7 @@ export default function Home() {
     setUser(JSON.parse(userData));
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
-    navigate('/login');
-  };
-
+  
   if (!user) {
     return (
       <div className="home-page">
@@ -136,12 +129,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Logout Section */}
-        <div className="logout-section">
-          <button className="btn btn-logout" onClick={handleLogout}>
-            🚪 Logout
-          </button>
-        </div>
+       
       </div>
     </div>
   );
