@@ -46,6 +46,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', response.data.access);
       localStorage.setItem('refresh', response.data.refresh);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isAuthenticated', 'true');
       
       // Call onLogin callback if provided
       if (onLogin) {
