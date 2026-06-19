@@ -1,12 +1,62 @@
 import "../styles/Lander.css";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Navbar() {
-  const userData = JSON.parse(localStorage.getItem('user'));
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('isAuthenticated') === 'true'
+  );
+  const [userData, setUserData] = useState(
+    localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+  );
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Listen for storage changes (when user logs in/out)
+    const handleStorageChange = (e) => {
+      if (e.key === 'isAuthenticated' || e.key === 'user') {
+        setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
+        setUserData(
+          localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+        );
+      }
+    };
+
+    // Also check for custom event from same tab
+    const handleCustomUpdate = () => {
+      setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
+      setUserData(
+        localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+      );
+    };
+
+    // Listen to storage events (works across tabs)
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event for same-tab updates
+    window.addEventListener('authStateChanged', handleCustomUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChanged', handleCustomUpdate);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('user');
+    localStorage.setItem('isAuthenticated', 'false');
+    
+    // Dispatch custom event to trigger navbar update
+    window.dispatchEvent(new Event('authStateChanged'));
+    
+    navigate('/');
+  };
+
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <a href="#top" className="logo">
+        <a href="/" className="logo">
           <span className="logo-mark">हB</span>
           HamroBhet
         </a>
@@ -18,12 +68,7 @@ function Navbar() {
           {isAuthenticated ? (
             <div className="user-info">
               <span>Welcome, {userData ? userData.first_name + ' ' + userData.last_name : 'Guest'}!</span>
-              <button className="btn btn-ghost" onClick={() => {
-                localStorage.removeItem('refresh');
-                localStorage.removeItem('user');
-                localStorage.setItem('isAuthenticated', 'false');
-                window.location.href = '/';
-              }}>Logout</button>
+              <button className="btn btn-ghost" onClick={handleLogout}>Logout</button>
             </div>
           ) : (
             <>

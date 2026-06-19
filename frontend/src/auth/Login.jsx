@@ -1,8 +1,11 @@
 import "../styles/Login.css";
+import "../styles/Toast.css";
 import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -18,14 +21,15 @@ function GoogleIcon() {
 }
 
 export default function Login({ onLogin }) {
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
   const handleSuccess = async (credentialResponse) => {
     setLoading(true);
-    setError(null);
+    const loadingToastId = toast.loading('🔐 Verifying your credentials...', {
+      position: 'top-right',
+      autoClose: false,
+    });
     
     try {
       console.log('[DEBUG] Google token received, sending to backend...');
@@ -41,33 +45,81 @@ export default function Login({ onLogin }) {
       
       console.log('[DEBUG] Backend response:', response.data);
       
-      // Handle your Django backend response (e.g., store backend JWT token)
+      // Handle your Django backend response
       console.log('Django Backend Login Success:', response.data);
       localStorage.setItem('token', response.data.access);
       localStorage.setItem('refresh', response.data.refresh);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       localStorage.setItem('isAuthenticated', 'true');
       
+      // Dispatch custom event to trigger navbar update
+      window.dispatchEvent(new Event('authStateChanged'));
+      
       // Call onLogin callback if provided
       if (onLogin) {
         onLogin(response.data.user);
       }
+
+      // Update loading toast to success
+      toast.update(loadingToastId, {
+        render: `✅ Welcome ${response.data.user.first_name}! Redirecting to dashboard...`,
+        type: 'success',
+        isLoading: false,
+        autoClose: 2000,
+        closeButton: true,
+      });
+
       setTimeout(() => {
         navigate('/home');
-      }, 1500);      
+      }, 2000);      
     } catch (error) {
       console.error('[DEBUG] Authentication failed:', error);
       console.error('[DEBUG] Error response:', error.response?.data);
       
       const errorMsg = error.response?.data?.error || error.response?.data?.details || error.message;
-      setError(`Login failed: ${errorMsg}`);
+      
+      // Update loading toast to error
+      toast.update(loadingToastId, {
+        render: `❌ ${errorMsg}`,
+        type: 'error',
+        isLoading: false,
+        autoClose: 4000,
+        closeButton: true,
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleError = () => {
+    console.log('Google login failed');
+    toast.error('❌ Google login failed. Please try again.', {
+      position: 'top-right',
+      autoClose: 4000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      closeButton: true,
+    });
+  };
+
   return (
     <div className="login-page">
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 9999 }}
+      />
+      
       <div className="login-card">
         <div className="login-logo">
           <span className="login-logo-mark">हB</span>
@@ -75,32 +127,31 @@ export default function Login({ onLogin }) {
         </div>
         <p className="login-subtitle">Support Nepali Creators Directly</p>
 
-        {error && (
-          <div style={{
-            padding: '12px',
-            marginBottom: '16px',
-            backgroundColor: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '4px',
-            color: '#c33',
-            fontSize: '14px',
-            wordBreak: 'break-word'
-          }}>
-            {error}
-          </div>
-        )}
-
         {loading ? (
-          <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
+          <div style={{ 
+            padding: '16px', 
+            textAlign: 'center', 
+            color: '#666',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            minHeight: '50px'
+          }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              border: '3px solid #FFF1E8',
+              borderTop: '3px solid #FF6B35',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
             Signing you in...
           </div>
         ) : (
           <GoogleLogin
             onSuccess={handleSuccess}
-            onError={() => {
-              console.log('Google login failed');
-              setError('Google login failed. Please try again.');
-            }}
+            onError={handleGoogleError}
           />
         )}
 
