@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import GoogleLoginView, SignUpView
+from .views import GoogleLoginView, SignUpView, get_categories
 
 
 urlpatterns = [
@@ -15,4 +15,8 @@ urlpatterns = [
 
     # Google OAuth Endpoint
     path('api/auth/google/', GoogleLoginView.as_view(), name='google-login'),
+
+
+
+    path('api/categories/', get_categories, name='get_categories'),
 ]

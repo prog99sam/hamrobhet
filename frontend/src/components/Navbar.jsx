@@ -61,26 +61,19 @@ function Navbar() {
           HamroBhet
         </a>
         <nav className="nav-mid nav-links">
-          <a href="#creators">Explore Creators</a>
+          <a href="/exp">Explore Creators</a>
           <a href="#become-creator">Become a Creator</a>
         </nav>
         <div className="nav-actions">
-<<<<<<< HEAD
-          {isAuthenticated ? (
-            <div className="user-info">
-              <span>Welcome, {userData ? userData.first_name + ' ' + userData.last_name : 'Guest'}!</span>
-              <button className="btn btn-ghost" onClick={handleLogout}>Logout</button>
-            </div>
-          ) : (
+         {isAuthenticated ? (
             <>
-              <a href="/login" className="btn btn-ghost">Login</a>
-              <a href="#" className="btn btn-primary">Sign up</a>
+              <span className="user-name">Welcome, {userData?.first_name + ' ' + userData?.last_name || 'User'}</span>  
+              <button className="logout-btn" onClick={handleLogout}>Logout</button>
             </>
+          ) : (
+            <> <a href="/login" className="btn btn-ghost">Login</a>
+          <a href="/signup" className="btn btn-primary">Sign up</a> </>
           )}
-=======
-          <a href="/login" className="btn btn-ghost">Login</a>
-          <a href="/signup" className="btn btn-primary">Sign up</a>
->>>>>>> 13b9a3c2b952f386a8ae3ef7be5f0ec3db896d2a
         </div>
         <button className="hamburger" aria-label="Open menu">
           <span></span><span></span><span></span>

@@ -4,8 +4,15 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from google.oauth2 import id_token
+from rest_framework.decorators import api_view
+
 from google.auth.transport import requests
 import os
+# your_app/views.py
+from accounts.serializers import  SignUpSerializer
+
+
+
 
 # Must match the Google Client ID from your frontend (index.js)
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '963900427336-efi4a04rt7ivvoo1s48l22t8nfb4ahif.apps.googleusercontent.com')
@@ -88,6 +95,7 @@ class GoogleLoginView(APIView):
 
 
 class SignUpView(APIView):
+
     def post(self, request):
         from .serializers import SignUpSerializer
         serializer = SignUpSerializer(data=request.data)
@@ -105,3 +113,8 @@ class SignUpView(APIView):
                 "access": str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
