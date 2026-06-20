@@ -1,15 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
 
 :root {
-  --bg: #FDFBF7;
-  --primary: #FF6B35;
-  --primary-dark: #E85A28;
-  --secondary: #2563EB;
-  --text: #111111;
-  --muted: #6B7280;
-  --orange-tint: #FFF4ED;
-  --blue-tint: #EEF2FF;
-  --border: #ECE7DD;
+  --orange: #FF6B35;
+  --orange-dark: #E5501C;
+  --orange-tint: #FFF1E8;
+  --blue: #1E3A5F;
+  --ink: #1A1A1A;
+  --ink-soft: #5B5B58;
+  --paper: #FDFBF7;
+  --line: #ECE7DD;
+  --green: #16A34A;
+  --green-tint: #EAF7EE;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.04), 0 1px 1px rgba(26, 26, 26, 0.03);
+  --shadow-md: 0 8px 24px -8px rgba(26, 26, 26, 0.10), 0 2px 6px rgba(26, 26, 26, 0.04);
+  --shadow-lg: 0 20px 50px -16px rgba(30, 58, 95, 0.18), 0 4px 12px rgba(26, 26, 26, 0.05);
 }
 
 * {
@@ -21,87 +28,269 @@
 html, body {
   height: 100%;
   width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
   overflow-x: hidden;
-  width: 100vw;
 }
 
-h1, h2, h3, .brand {
-  font-family: 'Sora', sans-serif;
+h1, h2, h3 {
+  font-family: 'Sora', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
 }
 
-.page {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  width: 100vw;
-  min-height: 100vh;
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
-/* ============ LEFT PANEL ============ */
-.left {
-  position: relative;
-  background: linear-gradient(165deg, #FFFFFF 0%, #FFF8F2 45%, #FDFBF7 100%);
-  overflow: hidden;
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Login Page Container */
+.login-page {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 56px 64px;
-  border-right: 1px solid var(--border);
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.03) 0%, rgba(30, 58, 95, 0.03) 100%);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
 }
 
-.blob {
+/* Decorative blobs - matching Lander theme */
+.login-page::before {
+  content: '';
   position: absolute;
+  width: 500px;
+  height: 500px;
   border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.45;
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.1), transparent 70%);
+  top: -150px;
+  left: -150px;
   pointer-events: none;
-}
-.blob-1 {
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, #FF6B35 0%, transparent 70%);
-  top: -160px;
-  left: -140px;
-  opacity: 0.22;
-}
-.blob-2 {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, #2563EB 0%, transparent 70%);
-  bottom: -160px;
-  right: -120px;
-  opacity: 0.16;
-}
-.blob-3 {
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, #FFB088 0%, transparent 70%);
-  top: 38%;
-  left: 55%;
-  opacity: 0.25;
+  filter: blur(70px);
 }
 
-/* Devanagari signature mark — "भेट" (bhet / meeting, encounter) */
-.devanagari-mark {
+.login-page::after {
+  content: '';
   position: absolute;
-  font-family: 'Sora', sans-serif;
-  font-size: 560px;
-  font-weight: 700;
-  color: #FF6B35;
-  opacity: 0.05;
-  line-height: 1;
-  top: 50%;
-  left: 50%;
-  transform: translate(-44%, -52%) rotate(-6deg);
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(30, 58, 95, 0.08), transparent 70%);
+  bottom: -120px;
+  right: -100px;
   pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
+  filter: blur(70px);
+}
+
+/* Login Card */
+.login-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--line);
+  position: relative;
+  z-index: 10;
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo Section */
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  margin-bottom: 8px;
+  justify-content: center;
+}
+
+.login-logo-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--orange), #FF8F5E);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px -2px rgba(255, 107, 53, 0.5);
+}
+
+.login-subtitle {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 32px;
+  letter-spacing: 0.01em;
+}
+
+/* Google Login Button Container */
+.login-card > div:nth-child(4) {
+  margin: 24px 0;
+}
+
+/* Error Message Styling */
+.error-message {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: #FFF0ED;
+  border: 1px solid #FFD4C8;
+  border-radius: var(--radius-sm);
+  color: #C4411B;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Loading State */
+.loading-state {
+  padding: 12px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-state::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--orange-tint);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Trust & Security Section */
+.login-trust {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 24px 0;
+  background: var(--green-tint);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.login-trust svg {
+  width: 20px;
+  height: 20px;
+  color: var(--green);
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+/* Footer Text */
+.login-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 24px;
+  line-height: 1.6;
+}
+
+.login-footer a {
+  color: var(--orange);
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.login-footer a:hover {
+  color: var(--orange-dark);
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 560px) {
+  .login-card {
+    padding: 36px 24px;
+    border-radius: var(--radius-md);
+  }
+
+  .login-logo {
+    font-size: 20px;
+    gap: 10px;
+  }
+
+  .login-logo-mark {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .login-trust {
+    padding: 12px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .login-trust svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Google Button Styling Override */
+:global(.gsi-material-button) {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+:global(.gsi-material-button-content) {
+  font-family: 'Inter', sans-serif !important;
 }
 
 .left-top { position: relative; z-index: 2; }
