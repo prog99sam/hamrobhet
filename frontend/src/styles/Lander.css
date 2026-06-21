@@ -208,6 +208,18 @@ section{padding:88px 0;}
   display:inline-block; font-size:11.5px; font-weight:600; color:var(--blue);
   background:#EAF0F8; padding:3px 10px; border-radius:99px; margin:7px 0 14px;
 }
+
+.logout-btn{
+  background:transparent; border:1.5px solid var(--line); color:var(--ink-soft);
+  padding:8px 14px; border-radius:9px; font-size:13.5px; font-weight:500;
+  transition:background .15s, color .15s, border-color .15s;
+  cursor:pointer;
+}
+.logout-btn:hover{
+  background:var(--orange); color:#fff; border-color:var(--orange);
+}
+
+
 .creator-supporters{font-size:13px; color:var(--ink-soft); margin-bottom:14px;}
 .creator-supporters b{color:var(--ink);}
 .creator-support-btn{

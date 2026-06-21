@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import '../styles/Signup.css';
+import { useNavigate } from 'react-router-dom';
 
 const CheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -23,6 +24,16 @@ const TRUST_ITEMS = [
 ];
 
 export default function Signup({ onSignup }) {
+  const navigate = useNavigate();
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, []);
+
   const handleGoogleSignup = () => {
     if (onSignup) {
       onSignup();
