@@ -58,7 +58,7 @@ function Hero() {
             monthly income — straight from the people who love their work.
           </p>
           <div className="hero-ctas">
-            <a href="#creators" className="btn btn-primary">Explore Creators</a>
+            <a href="/exp" className="btn btn-primary">Explore Creators</a>
             <a href="#become-creator" className="btn btn-secondary">Become a Creator</a>
           </div>
           <div className="hero-trust">
