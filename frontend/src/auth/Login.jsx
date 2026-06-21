@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import {jwtDecode} from 'jwt-decode';
+
+
 
 const CheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -38,6 +41,7 @@ export default function Login({ onLogin }) {
   }, []);
 
   const handleGoogleLogin = async (credentialResponse) => {
+    console.log('Google credential received:', jwtDecode(credentialResponse.credential));
     try {
       setIsLoading(true);
       const token = credentialResponse.credential;

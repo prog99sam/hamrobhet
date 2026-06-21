@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from google.oauth2 import id_token
 from rest_framework.decorators import api_view
-
+from accounts.models import UserProfile
 from google.auth.transport import requests
 import os
 # your_app/views.py
@@ -29,14 +29,14 @@ class GoogleLoginView(APIView):
             
         try:
             print(f"[DEBUG] Verifying token with Client ID: {GOOGLE_CLIENT_ID}")
-            # Verify the token with Google
             idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
             print(f"[DEBUG] Token verified successfully for email: {idinfo.get('email')}")
             
-            # Extract user info from verified data
             email = idinfo.get('email')
             first_name = idinfo.get('given_name', '')
             last_name = idinfo.get('family_name', '')
+            name = idinfo.get('name', '')
+            photo = idinfo.get('picture', '')
             
             if not email:
                 return Response(
@@ -44,7 +44,7 @@ class GoogleLoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Generate unique username from email
+            # Generate unique username
             base_username = email.split('@')[0]
             username = base_username
             counter = 1
@@ -52,19 +52,25 @@ class GoogleLoginView(APIView):
                 username = f"{base_username}{counter}"
                 counter += 1
             
-            # Fetch or create user in your database
+            # 1. Fetch or create the base User (Only use fields built into Django)
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
                     'username': username,
                     'first_name': first_name,
-                    'last_name': last_name
+                    'last_name': last_name,
                 }
             )
             
+            # 2. Link, create, or update the custom UserProfile
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.name = name
+            profile.photo = photo
+            profile.save()
+            
             print(f"[DEBUG] User {'created' if created else 'retrieved'}: {user.email}")
             
-            # Generate JWT tokens for frontend
+            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             return Response({
                 "message": "Successfully authenticated",
@@ -72,7 +78,10 @@ class GoogleLoginView(APIView):
                     "id": user.id,
                     "email": user.email,
                     "first_name": user.first_name,
-                    "last_name": user.last_name
+                    "last_name": user.last_name,
+                    # Accessing data from the linked profile instance
+                    "name": profile.name,
+                    "photo": profile.photo
                 },
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
@@ -93,7 +102,6 @@ class GoogleLoginView(APIView):
                 "details": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class SignUpView(APIView):
 
     def post(self, request):
@@ -107,7 +115,9 @@ class SignUpView(APIView):
                 "user": {
                     "id": user.id,
                     "email": user.email,
-                    "username": user.username
+                    "username": user.username,
+                    "name": user.name,
+                    "photo": user.photo
                 },
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),

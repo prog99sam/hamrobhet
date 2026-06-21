@@ -29,12 +29,7 @@ export default function Home() {
   }
 
   // Get user initials for avatar
-  const getInitials = () => {
-    const first = user.first_name?.charAt(0) || 'U';
-    const last = user.last_name?.charAt(0) || 'S';
-    return (first + last).toUpperCase();
-  };
-
+  
   return (
     <div className="home-page">
       <div className="home-content">
@@ -48,7 +43,7 @@ export default function Home() {
 
         {/* User Profile Card */}
         <div className="user-profile-card">
-          <div className="user-avatar">{getInitials()}</div>
+          <div className="user-avatar"><img src={user.photo} alt="User Avatar" style={{borderRadius: "50%"}} /></div>
           <div className="user-info">
             <h2>
               {user.first_name} {user.last_name}
