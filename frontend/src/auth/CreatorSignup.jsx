@@ -1,16 +1,10 @@
 import React, { useState, useRef, useMemo } from "react";
 import "../styles/CreatorSignup.css";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const CATEGORIES = [
-  "Art",
-  "Music",
-  "Tech",
-  "Education",
-  "Gaming",
-  "Sports",
-  "Comedy",
-  "Fitness",
-];
+const CATEGORIES = ["Art", "Music", "Tech", "Education", "Gaming", "Sports", "Comedy", "Fitness"];
 
 const DEFAULT_TIERS = [
   { id: "tier-1", name: "Supporter", price: "100" },
@@ -55,9 +49,18 @@ export default function CreatorSignup() {
   const [username, setUsername] = useState("");
   const [category, setCategory] = useState("");
   const [bio, setBio] = useState("");
-  const [photo, setPhoto] = useState(null);
+  
+  // Keep track of both: the preview string AND the actual binary file object
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [rawFile, setRawFile] = useState(null);
+  
   const [tiers, setTiers] = useState(DEFAULT_TIERS);
+  const [subSupporters, setSubSupporters] = useState(0);
+  const [subSuperFans, setSubSuperFans] = useState(0);
+  const [subFans, setSubFans] = useState(0);
+  
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const cleanUsername = useMemo(
     () => username.trim().toLowerCase().replace(/[^a-z0-9_]/g, ""),
@@ -67,27 +70,81 @@ export default function CreatorSignup() {
   function handlePhotoChange(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    
+    setRawFile(file); // Save raw binary file for Django
+
     const reader = new FileReader();
-    reader.onload = () => setPhoto(reader.result);
+    reader.onload = () => setPhotoPreview(reader.result); // Save string for React UI preview
     reader.readAsDataURL(file);
   }
 
   function updateTier(id, field, value) {
-    setTiers((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, [field]: value } : t))
-    );
+    setTiers((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)));
   }
 
   function handlePriceChange(id, raw) {
-    // Allow digits only, so creators can type freely without odd characters.
     const cleaned = raw.replace(/[^0-9]/g, "");
     updateTier(id, "price", cleaned);
   }
 
-  function handleLaunch(e) {
-    e.preventDefault();
-    // Placeholder submit handler — wire to backend as needed.
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevents page reload!
+
+    if (!cleanUsername) {
+      toast.error("Please enter a username.");
+      return;
+    }
+    if (!rawFile) {
+      toast.error("Please upload a profile picture.");
+      return;
+    }
+
+    try {
+      // 1. Initialize FormData instance
+      const formData = new FormData();
+
+      // 2. Append values cleanly
+      formData.append("username", cleanUsername);
+      formData.append("display_name", displayName);
+      formData.append("bio", bio);
+      formData.append("category", category);
+      formData.append("sub_supporters", subSupporters);
+      formData.append("sub_super_fans", subSuperFans);
+      formData.append("sub_fans", subFans);
+      
+      // Pass the binary file matching Django's request.FILES.get('img')
+      formData.append("img", rawFile); 
+
+      // Send the complex tiers list array serialized as a string
+      formData.append("tiers", JSON.stringify(tiers));
+
+      // 3. Fire request to your view endpoint
+      const res = await fetch("http://localhost:8000/api/creators/register/", {
+        method: "POST",
+        // Note: Do NOT manually declare Content-Type boundary here. 
+        // JavaScript will set it perfectly with boundary flags automatically.
+        body: formData, 
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        toast.error(`Failed to create page: ${errorData.error || res.statusText}`);
+        console.error("Error response from server:", errorData);
+        return;
+      }
+
+      const data = await res.json();
+      toast.success("Creator page created successfully!");
+      
+      setTimeout(() => {
+        navigate(`/creator/${data.data.username}`);
+      }, 1500);
+
+    } catch (err) {
+      console.error("Error launching creator page:", err);
+      toast.error("Network error occurred.");
+    }
+  };
 
   const previewName = displayName.trim() || "Your name";
   const previewUsername = cleanUsername || "username";
@@ -95,8 +152,8 @@ export default function CreatorSignup() {
 
   return (
     <div className="cs-page">
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={true} />
       <div className="cs-shell">
-        {/* LEFT — motivational panel */}
         <aside className="cs-pitch">
           <div className="cs-pitch__skyline" aria-hidden="true">
             <svg viewBox="0 0 400 120" preserveAspectRatio="none">
@@ -107,18 +164,11 @@ export default function CreatorSignup() {
               />
             </svg>
           </div>
-
           <span className="cs-badge">Become a Creator</span>
-
-          <h1 className="cs-pitch__heading">
-            Start earning directly from your audience.
-          </h1>
-
+          <h1 className="cs-pitch__heading">Start earning directly from your audience.</h1>
           <p className="cs-pitch__sub">
-            Build a community, share your work, and receive monthly support
-            from your supporters.
+            Build a community, share your work, and receive monthly support from your supporters.
           </p>
-
           <ul className="cs-benefits">
             {BENEFITS.map((b) => (
               <li className="cs-benefit-card" key={b.title}>
@@ -130,20 +180,16 @@ export default function CreatorSignup() {
               </li>
             ))}
           </ul>
-
-          <p className="cs-pitch__footnote">
-            Creators keep ownership of their content.
-          </p>
         </aside>
 
-        {/* RIGHT — onboarding card */}
         <main className="cs-card">
           <header className="cs-card__header">
             <h2>Create your creator page</h2>
             <p>It only takes a few minutes.</p>
           </header>
 
-          <form className="cs-form" onSubmit={handleLaunch}>
+          {/* Bound straight to handleSubmit */}
+          <form className="cs-form" onSubmit={handleSubmit}>
             <div className="cs-field">
               <label htmlFor="displayName">Display name</label>
               <input
@@ -164,25 +210,15 @@ export default function CreatorSignup() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-              <span className="cs-field__hint">
-                hamrobhet.com/@{previewUsername}
-              </span>
+              <span className="cs-field__hint">hamrobhet.com/@{previewUsername}</span>
             </div>
 
             <div className="cs-field">
               <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="" disabled>
-                  Choose a category
-                </option>
+              <select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="" disabled>Choose a category</option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
@@ -207,8 +243,8 @@ export default function CreatorSignup() {
                   onClick={() => fileInputRef.current?.click()}
                   aria-label="Upload profile picture"
                 >
-                  {photo ? (
-                    <img src={photo} alt="Profile preview" />
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Profile preview" />
                   ) : (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                       <path d="M12 16V4M12 4l-4 4M12 4l4 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -229,10 +265,6 @@ export default function CreatorSignup() {
 
             <div className="cs-field">
               <label>Subscription tiers</label>
-              <span className="cs-field__hint cs-field__hint--top">
-                Set up to three tiers. Supporters will pick the one that
-                fits them.
-              </span>
               <div className="cs-price-grid">
                 {tiers.map((tier) => (
                   <div className="cs-price-card" key={tier.id}>
@@ -245,9 +277,7 @@ export default function CreatorSignup() {
                         className="cs-price-card__price-input"
                         placeholder="0"
                         value={tier.price}
-                        onChange={(e) =>
-                          handlePriceChange(tier.id, e.target.value)
-                        }
+                        onChange={(e) => handlePriceChange(tier.id, e.target.value)}
                       />
                       <span className="cs-price-card__period">/mo</span>
                     </div>
@@ -256,13 +286,12 @@ export default function CreatorSignup() {
               </div>
             </div>
 
-            {/* Live preview */}
             <div className="cs-field">
               <label>Live preview</label>
               <div className="cs-preview-card">
                 <div className="cs-preview-card__avatar">
-                  {photo ? (
-                    <img src={photo} alt="" />
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="" />
                   ) : (
                     <span>{previewName.charAt(0).toUpperCase()}</span>
                   )}
@@ -271,15 +300,11 @@ export default function CreatorSignup() {
                   <p className="cs-preview-card__name">{previewName}</p>
                   <p className="cs-preview-card__username">@{previewUsername}</p>
                   <p className="cs-preview-card__bio">{previewBio}</p>
-                  <div className="cs-preview-card__meta">
-                    {category && (
-                      <span className="cs-preview-card__category">{category}</span>
-                    )}
-                  </div>
+                  {category && <span className="cs-preview-card__category">{category}</span>}
                   <div className="cs-preview-card__tiers">
                     {tiers.map((tier) => (
                       <span className="cs-preview-card__tier-chip" key={tier.id}>
-                        {tier.name.trim() || "Tier"}
+                        {tier.name.trim() || "Tier"}{" "}
                         <strong>Rs {tier.price || 0}/mo</strong>
                       </span>
                     ))}
