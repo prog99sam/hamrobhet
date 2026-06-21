@@ -1,19 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "../styles/Explore.css";
 
 /* ----------------------------------------------------------------
    Sample data — swap these out for real API data when wiring up
    ---------------------------------------------------------------- */
-const CATEGORIES = [
-  { id: "sports", name: "Sports", img: "https://picsum.photos/seed/cat-sports/300/360" },
-  { id: "music", name: "Music", img: "https://picsum.photos/seed/cat-music/300/360" },
-  { id: "gaming", name: "Gaming", img: "https://picsum.photos/seed/cat-gaming/300/360" },
-  { id: "education", name: "Education", img: "https://picsum.photos/seed/cat-education/300/360" },
-  { id: "art", name: "Art", img: "https://picsum.photos/seed/cat-art/300/360" },
-  { id: "tech", name: "Tech", img: "https://picsum.photos/seed/cat-tech/300/360" },
-  { id: "comedy", name: "Comedy", img: "https://picsum.photos/seed/cat-comedy/300/360" },
-  { id: "fitness", name: "Fitness", img: "https://picsum.photos/seed/cat-fitness/300/360" },
-];
+
 
 const FREQUENTLY_INTERACTED = [
   { id: "fi1", username: "sita.creates", img: "https://picsum.photos/seed/sita/120/120" },
@@ -53,6 +44,25 @@ export default function Explore() {
   const [searchValue, setSearchValue] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
   const carouselTrackRef = useRef(null);
+  const [categories, setCategories] = useState([]);
+
+
+
+  const fetchCategories = async()=>{
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/categories/");
+      const data = await res.json();
+      setCategories(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
 
   // Pause the infinite carousel on hover/focus, resume on leave.
   const pauseCarousel = () => {
@@ -100,7 +110,7 @@ export default function Explore() {
         <section className="explore-section">
           <h2 className="explore-section__title">Frequently Interacted</h2>
           <div className="explore-freq__scroll">
-            {FREQUENTLY_INTERACTED.map((creator) => (
+            {FREQUENTLY_INTERACTED.map((creator, key) => (
               <button key={creator.id} className="explore-freq__card">
                 <span className="explore-freq__avatar">
                   <img src={creator.img} alt="" loading="lazy" />
@@ -137,7 +147,7 @@ export default function Explore() {
         <section className="explore-section explore-categories" aria-label="Categories">
           <h2 className="explore-section__title">Categories</h2>
           <div className="explore-categories__scroll">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 className={`explore-catcard${activeCategory === cat.id ? " explore-catcard--active" : ""}`}

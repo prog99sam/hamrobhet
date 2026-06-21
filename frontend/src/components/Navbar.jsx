@@ -56,7 +56,7 @@ function Navbar() {
           HamroBhet
         </a>
         <nav className="nav-mid nav-links">
-          <a href="#creators">Explore Creators</a>
+          <a href="/exp">Explore Creators</a>
           <a href="#become-creator">Become a Creator</a>
         </nav>
         <div className="nav-actions">
@@ -70,6 +70,9 @@ function Navbar() {
               <a href="/login" className="btn btn-ghost">Login</a>
               <a href="/signup" className="btn btn-primary">Sign up</a>
             </>
+          ) : (
+            <> <a href="/login" className="btn btn-ghost">Login</a>
+          <a href="/signup" className="btn btn-primary">Sign up</a> </>
           )}
         </div>
         <button className="hamburger" aria-label="Open menu">

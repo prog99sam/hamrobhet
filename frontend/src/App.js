@@ -11,18 +11,23 @@ import Home from "./components/Home";
 
 function App() {
   return (
+    <>
+   
     <BrowserRouter>
       <Navbar />
       <Routes>
         <Route path="/" element={<Lander />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/sub" element={<Subscribe />} />
         <Route path="/exp" element={<Explore />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home" element={<Home />} />
+        
+
       </Routes>
       <Footer />
     </BrowserRouter>
+    </>
   );
 }
 
