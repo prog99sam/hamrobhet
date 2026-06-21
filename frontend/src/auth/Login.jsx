@@ -6,8 +6,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
+import { jwtDecode } from 'jwt-decode';
 
 function GoogleIcon() {
   
@@ -34,6 +33,7 @@ export default function Login({ onLogin }) {
   }, []);
   const handleSuccess = async (credentialResponse) => {
     setLoading(true);
+    console.log('[DEBUG] Google credential response:', jwtDecode(credentialResponse.credential));
     const loadingToastId = toast.loading('🔐 Verifying your credentials...', {
       position: 'top-right',
       autoClose: false,
