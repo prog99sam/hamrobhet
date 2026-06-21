@@ -1,4 +1,5 @@
 from django.urls import path
+from accounts.views.payment import InitializePaymentView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import GoogleLoginView, SignUpView, get_categories
 from accounts.views.creators import get_creators_for_you, get_frequently_interacted
@@ -24,4 +25,5 @@ urlpatterns = [
 
     path('api/frequently-interacted/', get_frequently_interacted, name='get_frequently_interacted'),
     path('api/creators/', get_creators_for_you, name='get_creators_for_you'),
+    path('api/payments/initialize/', InitializePaymentView.as_view(), name='initialize_payment'),
 ]
