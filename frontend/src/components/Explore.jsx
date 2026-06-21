@@ -1,14 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import "../styles/Explore.css";
+import { useNavigate } from "react-router-dom";
 
 /* ----------------------------------------------------------------
    Sample data — swap these out for real API data when wiring up
    ---------------------------------------------------------------- */
-
-
-
-
-
 const TOP_CREATORS = [
   { id: "tc1", username: "pooja.lens", img: "https://picsum.photos/seed/pooja/400/300", stat: "12.4k" },
   { id: "tc2", username: "rohan_riffs", img: "https://picsum.photos/seed/rohan/400/300", stat: "9.8k" },
@@ -28,47 +24,43 @@ export default function Explore() {
   const [categories, setCategories] = useState([]);
   const [frequentlyInteracted, setFrequentlyInteracted] = useState([]);
   const [creators, setCreators] = useState([]);
+  const navigate = useNavigate();
 
-
-  const fetchCategories = async()=>{
+  const fetchCategories = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/categories/");
       const data = await res.json();
       setCategories(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
-  }
+  };
 
-  const fetchCreatorsForYou = async()=>{
+  const fetchCreatorsForYou = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/frequently-interacted/");
       const data = await res.json();
       setFrequentlyInteracted(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching frequently interacted:", error);
     }
-  }
+  };
 
-  const fetchCreators = async()=>{
+  const fetchCreators = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/creators/");
       const data = await res.json();
       setCreators(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching creators:", error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchCategories();
     fetchCreatorsForYou();
     fetchCreators();
   }, []);
-
 
   // Pause the infinite carousel on hover/focus, resume on leave.
   const pauseCarousel = () => {
@@ -82,8 +74,12 @@ export default function Explore() {
     }
   };
 
-  // Duplicate the carousel items once so the CSS marquee can loop seamlessly.
-  
+  // 1. FIXED: Added 'username' parameter to the navigation hook function
+  const goToProfile = (username) => {
+    if (username) {
+      navigate(`/creator/${username}`);
+    }
+  };
 
   return (
     <div className="explore-page">
@@ -116,8 +112,12 @@ export default function Explore() {
         <section className="explore-section">
           <h2 className="explore-section__title">Frequently Interacted</h2>
           <div className="explore-freq__scroll">
-            {frequentlyInteracted.map((creator, key) => (
-              <button key={creator.id} className="explore-freq__card">
+            {frequentlyInteracted.map((creator) => (
+              <button 
+                key={creator.id} 
+                className="explore-freq__card"
+                onClick={() => goToProfile(creator.username)} // 👈 Triggers profile routing
+              >
                 <span className="explore-freq__avatar">
                   <img src={creator.img} alt="" loading="lazy" />
                 </span>
@@ -139,8 +139,20 @@ export default function Explore() {
           >
             <div className="explore-cfy__track" ref={carouselTrackRef}>
               {creators.map((creator, i) => (
-                <div className="explore-cfy__card" key={`${creator.id}-${i}`} tabIndex={0}>
-                  <img src={creator.img} alt="" loading="lazy" />
+                <div 
+                  className="explore-cfy__card" 
+                  key={`${creator.id}-${i}`} 
+                  tabIndex={0}
+                  onClick={() => goToProfile(creator.username)} // 👈 FIXED: Wrapped inside an anonymous function pass
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      goToProfile(creator.username); // 👈 FIXED
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <img src={creator.img} alt={creator.username} loading="lazy" />
                   <div className="explore-cfy__overlay" />
                   <span className="explore-cfy__name">{creator.username}</span>
                 </div>
@@ -173,7 +185,11 @@ export default function Explore() {
           <h2 className="explore-section__title">Top Creators</h2>
           <div className="explore-top__grid">
             {TOP_CREATORS.map((creator) => (
-              <button key={creator.id} className="explore-top__card">
+              <button 
+                key={creator.id} 
+                className="explore-top__card"
+                onClick={() => goToProfile(creator.username)} // 👈 Triggers profile routing
+              >
                 <span className="explore-top__imgwrap">
                   <img src={creator.img} alt="" loading="lazy" />
                 </span>

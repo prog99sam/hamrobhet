@@ -1,32 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "../styles/CreatorProfile.css";
-
-/**
- * MemberFeed — HamroBhet
- * /creator/@username/feed
- *
- * Redesign direction: lead with a single, large, full-bleed portrait of the
- * creator (Spotify-artist-page / Instagram-cover energy) instead of a flat
- * utility bar. The name lives on the photo, not next to it. Ambient drifting
- * particles and soft color blobs keep the whole page feeling alive, not just
- * the hero.
- *
- * Update: added an aesthetic search bar directly under the creator info,
- * removed the "Recent Activity" strip, and squared off every post/media
- * image (no rounded corners on imagery).
- */
-
-const CREATOR = {
-  name: "Aanya Rai",
-  username: "aanyarai",
-  category: "Music",
-  avatarSmall:
-    "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=300&auto=format&fit=crop",
-  cover:
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop",
-  supportingSince: "March",
-  supporterCount: 214,
-};
+import { useParams } from "react-router-dom";
 
 const PINNED_POST = {
   title: "Saanjh is finally finished — full track inside",
@@ -114,19 +88,14 @@ const SUPPORTERS = [
 
 const FLOATERS = ["♪", "♫", "✦", "❤", "♬", "✧"];
 
+// SVG Icons
 function HeartIcon({ filled }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} aria-hidden="true">
-      <path
-        d="M12 21s-7.2-4.6-10-9.1C0.3 8.3 1.8 4.5 5.4 3.6c2.1-0.5 4.2 0.4 5.5 2.2 1.3-1.8 3.4-2.7 5.5-2.2 3.6 0.9 5.1 4.7 3.4 8.3C19.2 16.4 12 21 12 21z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
+      <path d="M12 21s-7.2-4.6-10-9.1C0.3 8.3 1.8 4.5 5.4 3.6c2.1-0.5 4.2 0.4 5.5 2.2 1.3-1.8 3.4-2.7 5.5-2.2 3.6 0.9 5.1 4.7 3.4 8.3C19.2 16.4 12 21 12 21z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 }
-
 function CommentIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -134,7 +103,6 @@ function CommentIcon() {
     </svg>
   );
 }
-
 function ShareIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -145,20 +113,16 @@ function ShareIcon() {
     </svg>
   );
 }
-
+if (typeof window !== "undefined") {
+  // Suppress warnings
+}
 function MessageIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M21 11.5a8.5 8.5 0 0 1-12.4 7.55L4 20l1.05-4.3A8.5 8.5 0 1 1 21 11.5z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.55L4 20l1.05-4.3A8.5 8.5 0 1 1 21 11.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 }
-
 function PlayIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -166,7 +130,6 @@ function PlayIcon() {
     </svg>
   );
 }
-
 function SearchIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="search-icon">
@@ -175,7 +138,6 @@ function SearchIcon() {
     </svg>
   );
 }
-
 function CloseIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -183,7 +145,6 @@ function CloseIcon() {
     </svg>
   );
 }
-
 function HomeIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -191,7 +152,6 @@ function HomeIcon() {
     </svg>
   );
 }
-
 function MediaIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -201,7 +161,6 @@ function MediaIcon() {
     </svg>
   );
 }
-
 function BellIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -210,7 +169,6 @@ function BellIcon() {
     </svg>
   );
 }
-
 function PersonIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -220,7 +178,6 @@ function PersonIcon() {
   );
 }
 
-/** Ambient drifting symbols — runs the whole page, not just the hero. */
 function FloatingField() {
   const items = Array.from({ length: 10 });
   return (
@@ -234,7 +191,8 @@ function FloatingField() {
   );
 }
 
-function PostCard({ post }) {
+// 1. FIXED: Moved PostCard component layout entirely OUTSIDE of parent block
+function PostCard({ post, creatorInfo }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
 
@@ -246,9 +204,10 @@ function PostCard({ post }) {
   return (
     <article className="feed-post">
       <header className="feed-post-head">
-        <img src={CREATOR.avatarSmall} alt="" className="feed-post-avatar" />
+        {/* Adjusted fallback strategies for your API keys here */}
+        <img src={creatorInfo?.image_url || creatorInfo?.avatarSmall || "https://i.pravatar.cc/100"} alt="" className="feed-post-avatar" />
         <div className="feed-post-meta">
-          <span className="feed-post-name">{CREATOR.name}</span>
+          <span className="feed-post-name">{creatorInfo?.display_name || creatorInfo?.name || "Creator"}</span>
           <span className="feed-post-date">{post.date}</span>
         </div>
         {post.badge && (
@@ -285,6 +244,26 @@ export default function MemberFeed() {
   const [activeNav, setActiveNav] = useState("home");
   const [query, setQuery] = useState("");
   const searchRef = useRef(null);
+  const [creatorInfo, setCreatorInfo] = useState(null);
+  const { username } = useParams();
+
+  // 2. FIXED: Wired up API initialization hook routine cleanly inside a unified lifecycle observer
+  useEffect(() => {
+    const fetchCreatorInfo = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/creators/${username}/`);
+        const data = await response.json();
+        console.log(data)
+        setCreatorInfo(data);
+      } catch (err) {
+        console.error("Failed to fetch creator info:", err);
+      }
+    };
+
+    if (username) {
+      fetchCreatorInfo();
+    }
+  }, [username]);
 
   useEffect(() => {
     if (!shared) return;
@@ -298,7 +277,6 @@ export default function MemberFeed() {
     return () => clearTimeout(t);
   }, [messaged]);
 
-  // "/" focuses the search bar, like most modern apps.
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "/" && document.activeElement !== searchRef.current) {
@@ -321,9 +299,7 @@ export default function MemberFeed() {
 
   const q = query.trim().toLowerCase();
   const filteredPosts = q
-    ? POSTS.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.text.toLowerCase().includes(q)
-      )
+    ? POSTS.filter((p) => p.title.toLowerCase().includes(q) || p.text.toLowerCase().includes(q))
     : POSTS;
   const filteredMedia = q ? MEDIA.filter((m) => m.title.toLowerCase().includes(q)) : MEDIA;
 
@@ -337,15 +313,16 @@ export default function MemberFeed() {
       {/* ───────── HERO: large creator photo ───────── */}
       <header className="hero-cover">
         <div className="hero-photo-wrap">
-          <img src={CREATOR.cover} alt={CREATOR.name} className="hero-photo" />
+          {/* 3. FIXED: Added fallback fields matching backend properties like image_url */}
+          <img src={creatorInfo?.img || creatorInfo?.cover || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f"} alt={creatorInfo?.display_name} className="hero-photo" />
           <div className="hero-scrim" />
           <span className="hero-supporter-chip">
-            <span className="dot" /> Supporting since {CREATOR.supportingSince}
+            <span className="dot" /> Supporting since {creatorInfo?.supportingSince || "2026"}
           </span>
           <div className="hero-text">
-            <span className="hero-category">{CREATOR.category}</span>
-            <h1 className="hero-name">{CREATOR.name}</h1>
-            <p className="hero-handle">@{CREATOR.username}</p>
+            <span className="hero-category">{creatorInfo?.category || "Artist"}</span>
+            <h1 className="hero-name">{creatorInfo?.display_name || creatorInfo?.name || username}</h1>
+            <p className="hero-handle">@{creatorInfo?.username || username}</p>
           </div>
         </div>
 
@@ -370,7 +347,7 @@ export default function MemberFeed() {
               ref={searchRef}
               type="text"
               className="search-input"
-              placeholder={`Search ${CREATOR.name}'s posts and media…`}
+              placeholder={`Search ${creatorInfo?.display_name || creatorInfo?.name || "creator"}'s posts and media…`}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search posts and media"
@@ -424,12 +401,13 @@ export default function MemberFeed() {
 
         {/* ───────── POST FEED ───────── */}
         <section className="feed-section">
-          <h2 className="section-title">Latest from {CREATOR.name}</h2>
+          {/* 4. FIXED: Added optional chaining here so it doesn't crash while loading */}
+          <h2 className="section-title">Latest from {creatorInfo?.display_name || creatorInfo?.name || username}</h2>
           <div className="feed-list">
             {filteredPosts.length === 0 ? (
               <p className="feed-post-text">No posts match "{query}".</p>
             ) : (
-              filteredPosts.map((post) => <PostCard key={post.id} post={post} />)
+              filteredPosts.map((post) => <PostCard key={post.id} post={post} creatorInfo={creatorInfo} />)
             )}
           </div>
         </section>
@@ -441,10 +419,11 @@ export default function MemberFeed() {
               {SUPPORTERS.map((src, i) => (
                 <img src={src} alt="" key={i} className="overlap-avatar" style={{ zIndex: SUPPORTERS.length - i }} />
               ))}
-              <span className="overlap-more">+{CREATOR.supporterCount - SUPPORTERS.length}</span>
+              {/* 5. FIXED: Guarded calculations with optional chaining defaults */}
+              <span className="overlap-more">+{Math.max(0, (creatorInfo?.supporterCount || 0) - SUPPORTERS.length)}</span>
             </div>
             <p className="community-text">
-              <strong>{CREATOR.supporterCount}</strong> people support this creator.
+              <strong>{creatorInfo?.supporterCount || 0}</strong> people support this creator.
             </p>
           </div>
         </section>

@@ -40,7 +40,7 @@ function App() {
         <Route path="/creator/dashboard" element={isAuthenticated() ? <CreatorDashboard /> : <Navigate to="/login" />} />
         <Route path="/creator/post" element={isAuthenticated() ? <CreatePost /> : <Navigate to="/login" />} />
 
-        <Route path="/profile" element={<CreatorProfile />} />
+        <Route path="/creator/:username" element={<CreatorProfile />} />
 
       </Routes>
 
