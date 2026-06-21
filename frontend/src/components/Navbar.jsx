@@ -57,7 +57,7 @@ function Navbar() {
         </a>
         <nav className="nav-mid nav-links">
           <a href="/exp">Explore Creators</a>
-          <a href="#become-creator">Become a Creator</a>
+          <a href="/creator/signup">Become a Creator</a>
         </nav>
         <div className="nav-actions">
           {isAuthenticated ? (

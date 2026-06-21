@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Login from "./auth/Login";
@@ -12,29 +12,35 @@ import Explore from "./components/Explore";
 import Subscribe from "./components/Subscribe";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
-
+import { isAuthenticated } from "./auth/auth.js";
 
 function App() {
   return (
-    <>
-   
     <BrowserRouter>
       <Navbar />
+
       <Routes>
-        <Route path="/" element={<Lander />} />
+
+        <Route path="/" element={isAuthenticated() ? <Navigate to="/creator/dashboard" /> : <Lander />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/sub" element={<Subscribe />} />
+
+        <Route path="/login" element={isAuthenticated() ? <Navigate to="/creator/dashboard" /> : <Login />} />
+        <Route path="/signup" element={isAuthenticated() ? <Navigate to="/creator/dashboard" /> : <Signup />} />
+
+        <Route path="/creator/signup" element={isAuthenticated() ? <CreatorSignup /> : <Navigate to="/login" />} />
+
         <Route path="/exp" element={<Explore />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/creator/signup" element={<CreatorSignup />} />
-        <Route path="/creator/post" element={<CreatePost />} />
-        <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+        <Route path="/sub" element={isAuthenticated() ? <Subscribe /> : <Navigate to="/login" /> } />
+
+        <Route path="/creator/dashboard" element={isAuthenticated() ? <CreatorDashboard /> : <Navigate to="/login" />} />
+        <Route path="/creator/post" element={isAuthenticated() ? <CreatePost /> : <Navigate to="/login" />} />
+
         <Route path="/profile" element={<CreatorProfile />} />
+
       </Routes>
+
       <Footer />
     </BrowserRouter>
-    </>
   );
 }
 
