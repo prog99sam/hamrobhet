@@ -12,7 +12,6 @@ function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for storage changes (when user logs in/out)
     const handleStorageChange = (e) => {
       if (e.key === 'isAuthenticated' || e.key === 'user') {
         setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
@@ -22,7 +21,6 @@ function Navbar() {
       }
     };
 
-    // Also check for custom event from same tab
     const handleCustomUpdate = () => {
       setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
       setUserData(
@@ -30,9 +28,7 @@ function Navbar() {
       );
     };
 
-    // Listen to storage events (works across tabs)
     window.addEventListener('storage', handleStorageChange);
-    // Custom event for same-tab updates
     window.addEventListener('authStateChanged', handleCustomUpdate);
 
     return () => {
@@ -46,10 +42,9 @@ function Navbar() {
     localStorage.removeItem('refresh');
     localStorage.removeItem('user');
     localStorage.setItem('isAuthenticated', 'false');
-    
-    // Dispatch custom event to trigger navbar update
+
     window.dispatchEvent(new Event('authStateChanged'));
-    
+
     navigate('/');
   };
 
@@ -73,7 +68,7 @@ function Navbar() {
           ) : (
             <>
               <a href="/login" className="btn btn-ghost">Login</a>
-              <a href="#" className="btn btn-primary">Sign up</a>
+              <a href="/signup" className="btn btn-primary">Sign up</a>
             </>
           )}
         </div>
