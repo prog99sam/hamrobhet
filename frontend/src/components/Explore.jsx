@@ -6,27 +6,8 @@ import "../styles/Explore.css";
    ---------------------------------------------------------------- */
 
 
-const FREQUENTLY_INTERACTED = [
-  { id: "fi1", username: "sita.creates", img: "https://picsum.photos/seed/sita/120/120" },
-  { id: "fi2", username: "raj_gaming", img: "https://picsum.photos/seed/raj/120/120" },
-  { id: "fi3", username: "anu.art", img: "https://picsum.photos/seed/anu/120/120" },
-  { id: "fi4", username: "bibek_beats", img: "https://picsum.photos/seed/bibek/120/120" },
-  { id: "fi5", username: "maya.codes", img: "https://picsum.photos/seed/maya/120/120" },
-  { id: "fi6", username: "suman_fit", img: "https://picsum.photos/seed/suman/120/120" },
-  { id: "fi7", username: "kabita.vlogs", img: "https://picsum.photos/seed/kabita/120/120" },
-  { id: "fi8", username: "prakash_fc", img: "https://picsum.photos/seed/prakash/120/120" },
-];
 
-const CREATORS_FOR_YOU = [
-  { id: "cfy1", username: "nirmala.dance", img: "https://picsum.photos/seed/nirmala/480/640" },
-  { id: "cfy2", username: "dipesh_drone", img: "https://picsum.photos/seed/dipesh/480/640" },
-  { id: "cfy3", username: "sunita.kitchen", img: "https://picsum.photos/seed/sunita/480/640" },
-  { id: "cfy4", username: "aayush_climbs", img: "https://picsum.photos/seed/aayush/480/640" },
-  { id: "cfy5", username: "rita.paints", img: "https://picsum.photos/seed/rita/480/640" },
-  { id: "cfy6", username: "bishal_beats", img: "https://picsum.photos/seed/bishal/480/640" },
-  { id: "cfy7", username: "sarita.stories", img: "https://picsum.photos/seed/sarita/480/640" },
-  { id: "cfy8", username: "manish_moto", img: "https://picsum.photos/seed/manish/480/640" },
-];
+
 
 const TOP_CREATORS = [
   { id: "tc1", username: "pooja.lens", img: "https://picsum.photos/seed/pooja/400/300", stat: "12.4k" },
@@ -45,7 +26,8 @@ export default function Explore() {
   const [activeCategory, setActiveCategory] = useState(null);
   const carouselTrackRef = useRef(null);
   const [categories, setCategories] = useState([]);
-
+  const [frequentlyInteracted, setFrequentlyInteracted] = useState([]);
+  const [creators, setCreators] = useState([]);
 
 
   const fetchCategories = async()=>{
@@ -59,8 +41,32 @@ export default function Explore() {
     }
   }
 
+  const fetchCreatorsForYou = async()=>{
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/frequently-interacted/");
+      const data = await res.json();
+      setFrequentlyInteracted(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching frequently interacted:", error);
+    }
+  }
+
+  const fetchCreators = async()=>{
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/creators/");
+      const data = await res.json();
+      setCreators(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching creators:", error);
+    }
+  }
+
   useEffect(() => {
     fetchCategories();
+    fetchCreatorsForYou();
+    fetchCreators();
   }, []);
 
 
@@ -77,7 +83,7 @@ export default function Explore() {
   };
 
   // Duplicate the carousel items once so the CSS marquee can loop seamlessly.
-  const loopedCreators = [...CREATORS_FOR_YOU, ...CREATORS_FOR_YOU];
+  
 
   return (
     <div className="explore-page">
@@ -110,7 +116,7 @@ export default function Explore() {
         <section className="explore-section">
           <h2 className="explore-section__title">Frequently Interacted</h2>
           <div className="explore-freq__scroll">
-            {FREQUENTLY_INTERACTED.map((creator, key) => (
+            {frequentlyInteracted.map((creator, key) => (
               <button key={creator.id} className="explore-freq__card">
                 <span className="explore-freq__avatar">
                   <img src={creator.img} alt="" loading="lazy" />
@@ -132,7 +138,7 @@ export default function Explore() {
             onBlur={resumeCarousel}
           >
             <div className="explore-cfy__track" ref={carouselTrackRef}>
-              {loopedCreators.map((creator, i) => (
+              {creators.map((creator, i) => (
                 <div className="explore-cfy__card" key={`${creator.id}-${i}`} tabIndex={0}>
                   <img src={creator.img} alt="" loading="lazy" />
                   <div className="explore-cfy__overlay" />
