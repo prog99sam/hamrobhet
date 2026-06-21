@@ -1,6 +1,9 @@
-import React, {useEffect} from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/Signup.css';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const CheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -26,7 +29,7 @@ const TRUST_ITEMS = [
 export default function Signup({ onSignup }) {
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -34,10 +37,44 @@ export default function Signup({ onSignup }) {
     }
   }, []);
 
-  const handleGoogleSignup = () => {
-    if (onSignup) {
-      onSignup();
+  const handleGoogleSignup = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      const token = credentialResponse.credential;
+      
+      // Send token to backend
+      const response = await axios.post('http://localhost:8000/api/auth/google/', {
+        token: token
+      });
+
+      // Store tokens and user data
+      localStorage.setItem('token', response.data.access);
+      localStorage.setItem('refresh', response.data.refresh);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isAuthenticated', 'true');
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event('authStateChanged'));
+
+      toast.success('Account created successfully!');
+      
+      // Navigate to home
+      navigate('/home');
+      
+      if (onSignup) {
+        onSignup();
+      }
+    } catch (error) {
+      console.error('Google signup error:', error);
+      const errorMessage = error.response?.data?.error || 'Signup failed. Please try again.';
+      toast.error(errorMessage);
+      setIsLoading(false);
     }
+  };
+
+  const handleSignupError = () => {
+    toast.error('Google signup failed. Please try again.');
+    setIsLoading(false);
   };
 
   return (
@@ -115,10 +152,15 @@ export default function Signup({ onSignup }) {
             <div className="panel-heading">Create your account</div>
             <div className="panel-sub">Get started in seconds with Google</div>
 
-            <button className="google-btn" type="button" onClick={handleGoogleSignup}>
-              <GoogleIcon />
-              Continue with Google
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSignup}
+                onError={handleSignupError}
+                text="signup_with"
+                size="large"
+                width="100%"
+              />
+            </div>
 
             <div className="value-strip">
               <p>Create your account in seconds and start supporting creators — or become one yourself.</p>

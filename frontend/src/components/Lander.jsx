@@ -58,8 +58,8 @@ function Hero() {
             monthly income — straight from the people who love their work.
           </p>
           <div className="hero-ctas">
-            <a href="#creators" className="btn btn-primary">Explore Creators</a>
-            <a href="#become-creator" className="btn btn-secondary">Become a Creator</a>
+            <a href="/exp" className="btn btn-primary">Explore Creators</a>
+            <a href="/creator/signup" className="btn btn-secondary">Become a Creator</a>
           </div>
           <div className="hero-trust">
             <div className="avatar-stack">
@@ -205,7 +205,7 @@ function CreatorCTA() {
         <span className="eyebrow">For creators</span>
         <h2 style={{ marginTop: "18px" }}>Ready to earn from your audience?</h2>
         <p>Set up your page in minutes and start getting paid by the people who already follow your work.</p>
-        <a href="#" className="btn btn-primary" style={{ padding: "16px 32px", fontSize: "16px" }}>
+        <a href="/creator/signup" className="btn btn-primary" style={{ padding: "16px 32px", fontSize: "16px" }}>
           Become a Creator
         </a>
         <div className="cta-perks">
