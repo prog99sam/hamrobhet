@@ -15,6 +15,7 @@ import Explore from "./components/Explore";
 import Subscribe from "./components/Subscribe";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
+import CreatorSettings from "./components/CreatorSettings";
 import { isAuthenticated } from "./auth/auth.js";
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
         <Route path="/creator/post" element={isAuthenticated() ? <CreatePost /> : <Navigate to="/login" />} />
 
         <Route path="/creator/:username" element={<CreatorProfile />} />
+        <Route path="/creator/settings" element={<CreatorSettings />} />
 
       </Routes>
 
