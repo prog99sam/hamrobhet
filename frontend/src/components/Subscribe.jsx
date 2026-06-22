@@ -91,18 +91,46 @@ const PhoneIcon = () => (
   </svg>
 );
 
+const SpinnerIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    aria-hidden="true"
+    style={{ animation: 'spin 0.8s linear infinite', display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }}
+  >
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+  </svg>
+);
+
 export default function Subscribe({ onSubscribe }) {
   const { username } = useParams();
-  const [data, setData]               = useState(null);
-  const [plans, setPlans]             = useState([]);
-  const [loading, setLoading]         = useState(true);
+
+  const [data, setData]                       = useState(null);
+  const [plans, setPlans]                     = useState([]);
+  const [loading, setLoading]                 = useState(true);
   const [selectedPlan, setSelectedPlan]       = useState('supporter');
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const [phone, setPhone]             = useState('');
+  const [phone, setPhone]                     = useState('');
+  const [paying, setPaying]                   = useState(false);
+  const [payError, setPayError]               = useState(null);
 
-  const userData = localStorage.getItem('user');
+  // ── Parse user from localStorage once ──────────────────────────────────────
+  const userData = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  }, []);
 
+  // ── Fetch creator data ──────────────────────────────────────────────────────
   useEffect(() => {
+    if (!username) return;
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -136,43 +164,109 @@ export default function Subscribe({ onSubscribe }) {
         setLoading(false);
       }
     };
-    if (username) fetchData();
+    fetchData();
   }, [username]);
 
   const activePlan = useMemo(
     () => plans.find((p) => p.id === selectedPlan) || plans[0],
-    [selectedPlan, plans]
+    [selectedPlan, plans],
   );
 
   const activeMethod = useMemo(
     () => PAYMENT_METHODS.find((m) => m.id === selectedPayment),
-    [selectedPayment]
+    [selectedPayment],
   );
 
+  // ── Phone validation ────────────────────────────────────────────────────────
+  const isPhoneValid = phone.replace(/\D/g, '').length === 10;
+
+  // ── PayBridgeNP payment flow ────────────────────────────────────────────────
   const handleSubscribe = async () => {
-    if (!selectedPayment) return;
+    if (!selectedPayment || !activePlan || paying) return;
+
+    // Validate phone before hitting the API
+    if (!isPhoneValid) {
+      setPayError('Please enter a valid 10-digit phone number.');
+      return;
+    }
+
+    setPaying(true);
+    setPayError(null);
     onSubscribe && onSubscribe({ plan: activePlan, method: selectedPayment });
+
     try {
       const res = await fetch('http://localhost:8000/api/payments/initialize/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount:   selectedPlan,
-          order_id: Math.floor(Math.random() * 1000),
-          name:     userData?.name,
-          email:    userData?.email,
-          phone,
+          amount:         activePlan.price,              // ✅ actual NPR number, not plan ID string
+          plan:           activePlan.id,                 // useful for backend subscription record
+          creator:        username,
+          order_id:       `${username}-${Date.now()}`,   // unique per attempt
+          name:           userData?.name  ?? '',
+          email:          userData?.email ?? '',
+          phone:          phone.replace(/\D/g, ''),      // digits only
+          payment_method: selectedPayment,
         }),
       });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson?.detail || `Server error: ${res.status}`);
+      }
+
       const json = await res.json();
+
+      if (!json.checkout_url) {
+        throw new Error('Payment gateway did not return a checkout URL.');
+      }
+
+      // ✅ Redirect to PayBridgeNP hosted checkout page
       window.location.href = json.checkout_url;
+
     } catch (err) {
-      console.error(err);
+      console.error('Payment init failed:', err);
+      setPayError(err.message || 'Payment initialization failed. Please try again.');
+      setPaying(false);
     }
   };
 
-  if (loading) return <div className="sub-page"><div className="sub-container sub-loading">Loading…</div></div>;
-  if (!data)   return <div className="sub-page"><div className="sub-container sub-loading">Creator not found.</div></div>;
+  // ── Clear error when user changes payment method or phone ───────────────────
+  const handlePaymentSelect = (id) => {
+    setSelectedPayment(id);
+    setPayError(null);
+    setPhone('');
+  };
+
+  const handlePhoneChange = (e) => {
+    // Only allow digits
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digits);
+    if (payError) setPayError(null);
+  };
+
+  // ── CTA button state ────────────────────────────────────────────────────────
+  const ctaDisabled = !selectedPayment || paying || (selectedPayment && !isPhoneValid);
+
+  const ctaLabel = () => {
+    if (paying) return null; // spinner + text rendered separately
+    if (!selectedPayment) return 'Select a payment method to continue';
+    if (!isPhoneValid && phone.length > 0) return 'Enter a valid 10-digit number';
+    if (!isPhoneValid) return `Enter your ${activeMethod?.label} number to continue`;
+    return `Continue with ${activeMethod?.label} — Rs ${activePlan?.price}/month`;
+  };
+
+  // ── Early returns ───────────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="sub-page">
+      <div className="sub-container sub-loading">Loading…</div>
+    </div>
+  );
+  if (!data) return (
+    <div className="sub-page">
+      <div className="sub-container sub-loading">Creator not found.</div>
+    </div>
+  );
 
   const avatarInitial  = data.display_name ? data.display_name.charAt(0).toUpperCase() : '?';
   const firstName      = data.display_name ? data.display_name.split(' ')[0] : 'Creator';
@@ -181,6 +275,9 @@ export default function Subscribe({ onSubscribe }) {
 
   return (
     <div className="sub-page">
+      {/* Spinner keyframe injected inline so no CSS file change needed */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
       <div className="sub-container">
 
         {/* ── CREATOR HEADER ── */}
@@ -216,8 +313,8 @@ export default function Subscribe({ onSubscribe }) {
                   className={[
                     'plan-card',
                     `plan-card--${meta.color || 'orange'}`,
-                    isActive      ? 'plan-card--active'   : '',
-                    meta.popular  ? 'plan-card--popular'  : '',
+                    isActive     ? 'plan-card--active'  : '',
+                    meta.popular ? 'plan-card--popular' : '',
                   ].join(' ')}
                   onClick={() => setSelectedPlan(plan.id)}
                   role="button"
@@ -270,7 +367,8 @@ export default function Subscribe({ onSubscribe }) {
                   selectedPayment === method.id ? 'payment-card--selected' : '',
                   method.muted ? 'payment-card--muted' : '',
                 ].join(' ')}
-                onClick={() => setSelectedPayment(method.id)}
+                onClick={() => handlePaymentSelect(method.id)}
+                disabled={paying}
               >
                 <PaymentIcon method={method.id} />
                 <span>{method.label}</span>
@@ -279,7 +377,7 @@ export default function Subscribe({ onSubscribe }) {
           </div>
         </div>
 
-        {/* ── PHONE NUMBER (shown only after payment method chosen) ── */}
+        {/* ── PHONE NUMBER ── */}
         {selectedPayment && (
           <div className="phone-section">
             <div className="phone-badge">
@@ -287,7 +385,7 @@ export default function Subscribe({ onSubscribe }) {
               <span>{activeMethod?.label} number</span>
             </div>
             <p className="phone-hint">{activeMethod?.hint}</p>
-            <div className="phone-input-wrap">
+            <div className={`phone-input-wrap${phone.length > 0 && !isPhoneValid ? ' phone-input-wrap--error' : ''}`}>
               <span className="phone-prefix">+977</span>
               <input
                 className="phone-input"
@@ -295,23 +393,45 @@ export default function Subscribe({ onSubscribe }) {
                 placeholder="98XXXXXXXX"
                 maxLength={10}
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
                 autoFocus
+                disabled={paying}
+                aria-label={`${activeMethod?.label} phone number`}
               />
+              {isPhoneValid && (
+                <span className="phone-valid-tick" aria-label="Valid">✓</span>
+              )}
             </div>
+            {phone.length > 0 && !isPhoneValid && (
+              <p className="phone-error">Must be exactly 10 digits (e.g. 98XXXXXXXX)</p>
+            )}
+          </div>
+        )}
+
+        {/* ── API ERROR ── */}
+        {payError && (
+          <div className="pay-error-banner" role="alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{payError}</span>
           </div>
         )}
 
         {/* ── CTA ── */}
         <button
-          className={`cta-button${!selectedPayment ? ' cta-button--disabled' : ''}`}
+          className={`cta-button${ctaDisabled ? ' cta-button--disabled' : ''}`}
           type="button"
-          disabled={!selectedPayment}
+          disabled={ctaDisabled}
           onClick={handleSubscribe}
+          aria-busy={paying}
         >
-          {selectedPayment
-            ? `Continue with ${activeMethod?.label} — Rs ${activePlan?.price}/month`
-            : 'Select a payment method to continue'}
+          {paying
+            ? <><SpinnerIcon />Redirecting to {activeMethod?.label}…</>
+            : ctaLabel()
+          }
         </button>
 
         {/* ── TRUST ── */}

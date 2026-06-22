@@ -14,7 +14,7 @@ class InitializePaymentView(APIView):
         customer_name = request.data.get('name', 'Ram Sharma')
         customer_email = request.data.get('email', 'ram@example.com')
         customer_phone = request.data.get('phone', '9841234567')
-
+        payment_method = request.data.get('payment_method')
         if not rupee_amount or not order_id:
             return Response(
                 {"error": "Amount and order_id are required"}, 
@@ -39,6 +39,7 @@ class InitializePaymentView(APIView):
             payload = {
             "amount": paisa_amount,
      "currency": "NPR",
+     "provider" : payment_method,
     "customer": {
         "name": customer_name,
         "email": customer_email,
