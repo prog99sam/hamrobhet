@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import '../styles/Subscribe.css';
 import { useParams } from 'react-router-dom';
+import '../styles/Subscribe.css';
 
 const PAYMENT_METHODS = [
   { id: 'esewa', label: 'eSewa', color: '#60BB46' },
@@ -51,7 +51,7 @@ const CheckMini = () => (
 );
 
 const ShieldCheck = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
     <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
     <path d="M9 12l2 2 4-4" />
   </svg>
@@ -62,9 +62,7 @@ export default function Subscribe({ onSubscribe }) {
   const [data, setData] = useState(null);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const userData = localStorage.getItem("user");
-  const [phone, setPhone] = useState()
-
+  const [phone, setPhone] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('supporter');
   const [selectedPayment, setSelectedPayment] = useState('esewa');
 
@@ -78,7 +76,7 @@ export default function Subscribe({ onSubscribe }) {
         const result = await res.json();
         setData(result);
 
-        // Construct standard plan objects using backend prices (falling back to defaults if 0)
+        // Standard plan objects using backend prices (falling back to defaults if 0)
         setPlans([
           {
             id: 'supporter',
@@ -121,48 +119,72 @@ export default function Subscribe({ onSubscribe }) {
     return method ? method.label : '';
   }, [selectedPayment]);
 
-  if (loading) {
-    return <div className="sub-page"><div className="sub-container" style={{textAlign: 'center', padding: '50px'}}>Loading...</div></div>;
-  }
+  const handleSubscribe = async () => {
+    // 1. Safe parsing of localStorage data
+    const rawUser = localStorage.getItem("user");
+    const userObj = rawUser ? JSON.parse(rawUser) : null;
 
-  if (!data) {
-    return <div className="sub-page"><div className="sub-container" style={{textAlign: 'center', padding: '50px'}}>Creator not found.</div></div>;
-  }
+    if (!userObj) {
+      alert("Please log in to complete your subscription.");
+      return;
+    }
 
-  // Derived Values to patch missing backend data safely
-  const avatarInitial = data.display_name ? data.display_name.charAt(0).toUpperCase() : '?';
-  const firstName = data.display_name ? data.display_name.split(' ')[0] : 'Creator';
-  const mockSupporters = 124; // Fallback since the backend doesn't provide a total count yet
-  const mockRating = 4.8; // Fallback rating
+    if (!phone.trim()) {
+      alert("Please enter your phone number before proceeding.");
+      return;
+    }
 
+    // Trigger local parent state tracking if passed
+    if (onSubscribe) {
+      onSubscribe({ plan: activePlan, method: selectedPayment });
+    }
 
-
-  const handleSubscribe = async()=>{
-    onSubscribe && onSubscribe({ plan: activePlan, method: selectedPayment });
-    try{
-      const res = await fetch("http://localhost:8000/api/payments/initialize/",{
+    try {
+      const res = await fetch("http://localhost:8000/api/payments/initialize/", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json', 
         },
-        body: JSON.stringify(
-          {
-            "amount": selectedPlan,
-            "order_id": Math.floor(Math.random()*1000),
-            "name": userData.name,
-            "email": userData.email,
-            "phone": phone,
-          }
-        ),
-        }
-      )
-      const data = await res.json();
-      window.location.href = data.checkout_url;
+        body: JSON.stringify({
+          "amount": activePlan?.price || 0, // Numeric price fixed
+          "order_id": Math.floor(Math.random() * 100000), // Larger random floor pool
+          "name": userObj.name || userObj.display_name || userObj.username, // Object extraction safety
+          "email": userObj.email,
+          "phone": phone.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Payment server initialization failed.");
+      }
+
+      const responseData = await res.json();
+      
+      if (responseData.checkout_url) {
+        window.location.href = responseData.checkout_url; // Direct gateway redirect
+      } else {
+        console.error("Missing checkout_url from response backend", responseData);
+        alert("Server response error: Checkout URL not provided.");
+      }
+    } catch (err) {
+      console.error("Subscription process exception error:", err);
+      alert("Unable to process request. Please try again later.");
     }
-    catch(err){
-      console.error(err);
-    }
+  };
+
+  if (loading) {
+    return <div className="sub-page"><div className="sub-container" style={{ textAlign: 'center', padding: '50px' }}>Loading...</div></div>;
   }
+
+  if (!data) {
+    return <div className="sub-page"><div className="sub-container" style={{ textAlign: 'center', padding: '50px' }}>Creator not found.</div></div>;
+  }
+
+  // Fallbacks to handle data mapping safely
+  const avatarInitial = data.display_name ? data.display_name.charAt(0).toUpperCase() : '?';
+  const firstName = data.display_name ? data.display_name.split(' ')[0] : 'Creator';
+  const mockSupporters = 124; 
+  const mockRating = 4.8; 
 
   return (
     <div className="sub-page">
@@ -171,9 +193,9 @@ export default function Subscribe({ onSubscribe }) {
         {/* CREATOR HEADER */}
         <div className="creator-header">
           {data.img ? (
-             <img src={data.img} alt={data.display_name} className="creator-avatar-img" />
+            <img src={data.img} alt={data.display_name} className="creator-avatar-img" />
           ) : (
-             <div className="creator-avatar">{avatarInitial}</div>
+            <div className="creator-avatar">{avatarInitial}</div>
           )}
           <div className="creator-names">
             <h1 className="creator-name">{data.display_name}</h1>
@@ -221,13 +243,26 @@ export default function Subscribe({ onSubscribe }) {
             ))}
           </div>
         </div>
-            <div className='phone-no'>
-              <h2>Enter your phone number:</h2>
-              <input type='text' onChange={(e)=>{
-                setPhone(e.target.value)
-              }} placeholder='Enter your phone number'/>
 
-            </div>
+        {/* PHONE NUMBER INPUT */}
+        <div className='phone-no' style={{ marginBottom: '24px' }}>
+          <h2 className="section-label">Enter your phone number</h2>
+          <input 
+            type='text' 
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)} 
+            placeholder='Enter your mobile number'
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #D1D5DB',
+              fontSize: '1rem',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
         {/* PAYMENT METHOD */}
         <div className="payment-section">
           <h2 className="section-label">Choose payment method</h2>
@@ -260,7 +295,7 @@ export default function Subscribe({ onSubscribe }) {
 
         {/* TRUST SECTION */}
         <div className="trust-section">
-          <div className="trust-row">
+          <div className="trust-row" style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
             <ShieldCheck />
             <span>Secure payments via PayBridgeNP</span>
           </div>
