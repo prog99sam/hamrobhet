@@ -17,6 +17,7 @@ import Footer from "./components/Footer";
 import Home from "./components/Home";
 import CreatorSettings from "./components/CreatorSettings";
 import { isAuthenticated } from "./auth/auth.js";
+import NotFound from "./components/NotFound.jsx";
 
 function App() {
   return (
@@ -43,7 +44,7 @@ function App() {
 
         <Route path="/creator/:username" element={<CreatorProfile />} />
         <Route path="/creator/settings" element={<CreatorSettings />} />
-
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <Footer />
