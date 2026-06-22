@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "../styles/CreatorProfile.css";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+
 
 const PINNED_POST = {
   title: "Saanjh is finally finished — full track inside",
@@ -246,7 +247,7 @@ export default function MemberFeed() {
   const searchRef = useRef(null);
   const [creatorInfo, setCreatorInfo] = useState(null);
   const { username } = useParams();
-
+  const navigate = useNavigate();
   // 2. FIXED: Wired up API initialization hook routine cleanly inside a unified lifecycle observer
   useEffect(() => {
     const fetchCreatorInfo = async () => {
@@ -335,6 +336,11 @@ export default function MemberFeed() {
             <MessageIcon />
             {messaged ? "Sent" : "Message"}
           </button>
+          <button className="glass-btn blass-btn--accent" onClick={()=>
+            {
+              navigate(`/sub/${username}`)
+            }
+          }>Subscribe</button>
         </div>
 
         <p className="welcome-msg">Welcome back to the community.</p>

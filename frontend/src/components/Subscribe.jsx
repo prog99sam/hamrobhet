@@ -1,29 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import '../styles/Subscribe.css';
-
-const PLANS = [
-  {
-    id: 'supporter',
-    title: 'Supporter',
-    price: 100,
-    benefits: ['Exclusive posts', 'Community access'],
-    badge: 'Most Popular',
-  },
-  {
-    id: 'fan',
-    title: 'Fan',
-    price: 250,
-    benefits: ['Everything in Supporter', 'Early content access', 'Behind-the-scenes posts'],
-    badge: null,
-  },
-  {
-    id: 'superfan',
-    title: 'Super Fan',
-    price: 500,
-    benefits: ['All perks', 'Priority support', 'Direct appreciation from creator'],
-    badge: null,
-  },
-];
+import { useParams } from 'react-router-dom';
 
 const PAYMENT_METHODS = [
   { id: 'esewa', label: 'eSewa', color: '#60BB46' },
@@ -80,23 +57,63 @@ const ShieldCheck = () => (
   </svg>
 );
 
-export default function Subscribe({ creator, onSubscribe }) {
-  const data = creator || {
-    username: 'sunita_art',
-    displayName: 'Sunita Shrestha',
-    avatarInitial: 'सु',
-    bio: 'Illustrator & visual storyteller, painting modern Nepal one piece at a time.',
-    category: 'Art',
-    supporters: 214,
-    rating: 4.9,
-  };
+export default function Subscribe({ onSubscribe }) {
+  const { username } = useParams();
+  const [data, setData] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const userData = localStorage.getItem("user");
+  const [phone, setPhone] = useState()
 
   const [selectedPlan, setSelectedPlan] = useState('supporter');
   const [selectedPayment, setSelectedPayment] = useState('esewa');
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`http://127.0.0.1:8000/api/creators/${username}/`);
+        if (!res.ok) throw new Error("Failed to fetch creator data");
+        
+        const result = await res.json();
+        setData(result);
+
+        // Construct standard plan objects using backend prices (falling back to defaults if 0)
+        setPlans([
+          {
+            id: 'supporter',
+            name: 'Supporter',
+            price: result.sub_supporters > 0 ? result.sub_supporters : 150,
+            features: ['Support the creator', 'Exclusive community updates']
+          },
+          {
+            id: 'fan',
+            name: 'Fan',
+            price: result.sub_fans > 0 ? result.sub_fans : 300,
+            features: ['All Supporter perks', 'Early access to content', 'Direct Q&A']
+          },
+          {
+            id: 'super_fan',
+            name: 'Super Fan',
+            price: result.sub_super_fans > 0 ? result.sub_super_fans : 1000,
+            features: ['All Fan perks', '1-on-1 monthly call', 'Exclusive merchandise']
+          }
+        ]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (username) {
+      fetchData();
+    }
+  }, [username]);
+
   const activePlan = useMemo(
-    () => PLANS.find((p) => p.id === selectedPlan),
-    [selectedPlan]
+    () => plans.find((p) => p.id === selectedPlan) || plans[0],
+    [selectedPlan, plans]
   );
 
   const activePaymentLabel = useMemo(() => {
@@ -104,11 +121,48 @@ export default function Subscribe({ creator, onSubscribe }) {
     return method ? method.label : '';
   }, [selectedPayment]);
 
-  const handleSubscribe = () => {
-    if (onSubscribe) {
-      onSubscribe({ planId: selectedPlan, paymentMethod: selectedPayment });
+  if (loading) {
+    return <div className="sub-page"><div className="sub-container" style={{textAlign: 'center', padding: '50px'}}>Loading...</div></div>;
+  }
+
+  if (!data) {
+    return <div className="sub-page"><div className="sub-container" style={{textAlign: 'center', padding: '50px'}}>Creator not found.</div></div>;
+  }
+
+  // Derived Values to patch missing backend data safely
+  const avatarInitial = data.display_name ? data.display_name.charAt(0).toUpperCase() : '?';
+  const firstName = data.display_name ? data.display_name.split(' ')[0] : 'Creator';
+  const mockSupporters = 124; // Fallback since the backend doesn't provide a total count yet
+  const mockRating = 4.8; // Fallback rating
+
+
+
+  const handleSubscribe = async()=>{
+    onSubscribe && onSubscribe({ plan: activePlan, method: selectedPayment });
+    try{
+      const res = await fetch("http://localhost:8000/api/payments/initialize/",{
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+        body: JSON.stringify(
+          {
+            "amount": selectedPlan,
+            "order_id": Math.floor(Math.random()*1000),
+            "name": userData.name,
+            "email": userData.email,
+            "phone": phone,
+          }
+        ),
+        }
+      )
+      const data = await res.json();
+      window.location.href = data.checkout_url;
     }
-  };
+    catch(err){
+      console.error(err);
+    }
+  }
 
   return (
     <div className="sub-page">
@@ -116,18 +170,22 @@ export default function Subscribe({ creator, onSubscribe }) {
 
         {/* CREATOR HEADER */}
         <div className="creator-header">
-          <div className="creator-avatar">{data.avatarInitial}</div>
+          {data.img ? (
+             <img src={data.img} alt={data.display_name} className="creator-avatar-img" />
+          ) : (
+             <div className="creator-avatar">{avatarInitial}</div>
+          )}
           <div className="creator-names">
-            <h1 className="creator-name">{data.displayName}</h1>
+            <h1 className="creator-name">{data.display_name}</h1>
             <span className="creator-handle">@{data.username}</span>
           </div>
           <p className="creator-bio">{data.bio}</p>
           <div className="creator-meta">
             <span className="category-badge">{data.category}</span>
             <span className="meta-dot">•</span>
-            <span className="meta-text">{data.supporters} supporters</span>
+            <span className="meta-text">{mockSupporters} supporters</span>
             <span className="meta-dot">•</span>
-            <span className="meta-text">★ {data.rating} rating</span>
+            <span className="meta-text">★ {mockRating} rating</span>
           </div>
         </div>
 
@@ -135,38 +193,41 @@ export default function Subscribe({ creator, onSubscribe }) {
         <div className="plans-section">
           <h2 className="section-label">Choose your support level</h2>
           <div className="plans-row">
-            {PLANS.map((plan) => {
-              const isSelected = plan.id === selectedPlan;
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  className={`plan-card ${isSelected ? 'plan-card--selected' : ''}`}
-                  onClick={() => setSelectedPlan(plan.id)}
-                >
-                  {plan.badge && <span className="plan-badge">{plan.badge}</span>}
-                  <div className="plan-title">{plan.title}</div>
-                  <div className="plan-price">
-                    Rs {plan.price}
-                    <span className="plan-price-unit">/month</span>
-                  </div>
-                  <ul className="plan-benefits">
-                    {plan.benefits.map((b) => (
-                      <li key={b}>
-                        <span className="benefit-check"><CheckMini /></span>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="plan-select-indicator">
-                    {isSelected ? 'Selected' : 'Select plan'}
-                  </div>
-                </button>
-              );
-            })}
+            {plans.map((plan) => (
+              <div 
+                key={plan.id}
+                className={`plan-card ${selectedPlan === plan.id ? 'plan-card--active' : ''}`}
+                onClick={() => setSelectedPlan(plan.id)}
+                style={{
+                  border: selectedPlan === plan.id ? '2px solid #FF6B35' : '1px solid #E5E7EB',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  marginBottom: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{plan.name}</h3>
+                  <span style={{ fontWeight: 'bold' }}>Rs {plan.price}/mo</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', color: '#4B5563' }}>
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <CheckMini /> {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
+            <div className='phone-no'>
+              <h2>Enter your phone number:</h2>
+              <input type='text' onChange={(e)=>{
+                setPhone(e.target.value)
+              }} placeholder='Enter your phone number'/>
 
+            </div>
         {/* PAYMENT METHOD */}
         <div className="payment-section">
           <h2 className="section-label">Choose payment method</h2>
@@ -189,8 +250,12 @@ export default function Subscribe({ creator, onSubscribe }) {
         </div>
 
         {/* PRIMARY ACTION */}
-        <button className="cta-button" type="button" onClick={handleSubscribe}>
-          Continue with {activePaymentLabel} — Rs {activePlan.price}/month
+        <button 
+          className="cta-button" 
+          type="button"
+          onClick={handleSubscribe}
+        >
+          Continue with {activePaymentLabel} — Rs {activePlan?.price}/month
         </button>
 
         {/* TRUST SECTION */}
@@ -208,7 +273,7 @@ export default function Subscribe({ creator, onSubscribe }) {
           <div className="trust-lines">
             <span>Cancel anytime</span>
             <span className="trust-sep">·</span>
-            <span>Goes directly to {data.displayName.split(' ')[0]}, no delay</span>
+            <span>Goes directly to {firstName}, no delay</span>
           </div>
         </div>
 
@@ -222,7 +287,7 @@ export default function Subscribe({ creator, onSubscribe }) {
             <div className="proof-avatar pa5">+</div>
           </div>
           <div className="proof-text">
-            <strong>{data.supporters} people</strong> already subscribed · Join them today
+            <strong>{mockSupporters} people</strong> already subscribed · Join them today
           </div>
         </div>
 

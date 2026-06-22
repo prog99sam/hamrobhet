@@ -35,7 +35,7 @@ function App() {
         <Route path="/creator/signup" element={isAuthenticated() ? <CreatorSignup /> : <Navigate to="/login" />} />
 
         <Route path="/exp" element={<Explore />} />
-        <Route path="/sub" element={isAuthenticated() ? <Subscribe /> : <Navigate to="/login" /> } />
+        <Route path="/sub/:username" element={isAuthenticated() ? <Subscribe /> : <Navigate to="/login" /> } />
 
         <Route path="/creator/dashboard" element={isAuthenticated() ? <CreatorDashboard /> : <Navigate to="/login" />} />
         <Route path="/creator/post" element={isAuthenticated() ? <CreatePost /> : <Navigate to="/login" />} />
