@@ -68,7 +68,7 @@ const QUICK_ACTIONS = [
 export default function CreatorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
-
+  const userInfo = JSON.parse(localStorage.getItem("user"));
   useEffect(() => {
     const t = setTimeout(() => setProgress(78), 250);
     return () => clearTimeout(t);
@@ -106,7 +106,7 @@ export default function CreatorDashboard() {
             alt="Sajan's avatar"
           />
           <div>
-            <p className="hb-profile-card__name">Sajan Shrestha</p>
+            <p className="hb-profile-card__name">{userInfo.name}</p>
             <p className="hb-profile-card__role">Illustrator</p>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function CreatorDashboard() {
               src="https://i.pravatar.cc/120?img=68"
               alt="Sajan's avatar"
             />
-            <h1 className="hb-hero__title">Welcome back, Sajan.</h1>
+            <h1 className="hb-hero__title">Welcome back, {userInfo.name}.</h1>
             <p className="hb-hero__sub">214 people are supporting your work.</p>
 
             <div className="hb-hero__stats">
